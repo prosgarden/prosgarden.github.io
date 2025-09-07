@@ -20,12 +20,15 @@ export interface Options {
   filterFn: (node: FileTrieNode) => boolean
   mapFn: (node: FileTrieNode) => void
   order: OrderEntries[]
+  // New option for additional components in mobile menu
+  mobileComponents?: (() => QuartzComponent)[]
 }
 
 const defaultOptions: Options = {
   folderDefaultState: "collapsed",
   folderClickBehavior: "link",
   useSavedState: true,
+  mobileComponents: [],
   mapFn: (node) => {
     return node
   },
@@ -33,7 +36,7 @@ const defaultOptions: Options = {
     // Sort order: folders first, then files. Sort folders and files alphabeticall
     if ((!a.isFolder && !b.isFolder) || (a.isFolder && b.isFolder)) {
       // numeric: true: Whether numeric collation should be used, such that "1" < "2" < "10"
-      // sensitivity: "base": Only strings that differ in base letters compare as unequal. Examples: a ≠ b, a = á, a = A
+      // sensitivity: "base": Only strings that differ in base letters compare as unequal. Examples: a â‰  b, a = Ã¡, a = A
       return a.displayName.localeCompare(b.displayName, undefined, {
         numeric: true,
         sensitivity: "base",
@@ -60,7 +63,7 @@ export default ((userOpts?: Partial<Options>) => {
   const opts: Options = { ...defaultOptions, ...userOpts }
   const { OverflowList, overflowListAfterDOMLoaded } = OverflowListFactory()
 
-  const Explorer: QuartzComponent = ({ cfg, displayClass }: QuartzComponentProps) => {
+  const Explorer: QuartzComponent = ({ cfg, displayClass, ...otherProps }: QuartzComponentProps) => {
     const id = `explorer-${numExplorers++}`
 
     return (
@@ -121,6 +124,20 @@ export default ((userOpts?: Partial<Options>) => {
         </button>
         <div id={id} class="explorer-content" aria-expanded={false} role="group">
           <OverflowList class="explorer-ul" />
+          
+          {/* Additional components for mobile menu */}
+          {opts.mobileComponents && opts.mobileComponents.length > 0 && (
+            <div class="mobile-additional-components">
+              {opts.mobileComponents.map((ComponentConstructor, index) => {
+                const Component = ComponentConstructor()
+                return (
+                  <div key={index} class="mobile-component-section">
+                    <Component {...{ cfg, displayClass, ...otherProps }} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
         <template id="template-file">
           <li>
@@ -159,7 +176,53 @@ export default ((userOpts?: Partial<Options>) => {
     )
   }
 
-  Explorer.css = style
+  Explorer.css = style + `
+    /* Additional styles for mobile components */
+    .mobile-additional-components {
+      display: none;
+    }
+    
+    @media all and (max-width: 1510px) {
+      .mobile-additional-components {
+        display: block;
+        border-top: 1px solid var(--lightgray);
+        margin-top: 1rem;
+        padding-top: 1rem;
+      }
+      
+      /* Components above file tree */
+      .mobile-components-above {
+        border-top: none;
+        border-bottom: 1px solid var(--lightgray);
+        margin-top: 0;
+        margin-bottom: 1rem;
+        padding-top: 0;
+        padding-bottom: 1rem;
+      }
+      
+      .mobile-component-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--lightgray);
+      }
+      
+      .mobile-component-section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+      }
+      
+      /* Hide titles in mobile sections to avoid duplication */
+      .mobile-component-section h2,
+      .mobile-component-section h3 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: var(--secondary);
+        font-weight: 600;
+      }
+    }
+  `
+  
   Explorer.afterDOMLoaded = concatenateResources(script, overflowListAfterDOMLoaded)
   return Explorer
 }) satisfies QuartzComponentConstructor

@@ -26,7 +26,30 @@ export const defaultContentPageLayout: PageLayout = {
     Component.TagList(),
   ],
   left: [
-    Component.PageTitle(),
+    Component.MobileOnly(
+      Component.Explorer({
+        title: "Site Explorer", 
+        mobileComponents: [
+          () => Component.FlexibleNavigation({
+            title: "Navigation",
+            showTitle: true,
+            links: [
+              { text: "Home", link: "/" },
+              { text: "About", link: "/about" },
+              { text: "GitHub", link: "https://github.com", external: true }
+            ]
+          }),
+          () => Component.TableOfContents()
+        ],
+        
+        // mobileComponentsPosition: "above"
+      }),
+      
+    ),
+    Component.PageTitle({
+      logoPath: "/static/logo.png",
+      logoSize: "large"
+    }),
     Component.MobileOnly(Component.Spacer()),
     Component.Flex({
       components: [
@@ -38,11 +61,20 @@ export const defaultContentPageLayout: PageLayout = {
         { Component: Component.ReaderMode() },
       ],
     }),
-    Component.Explorer(),
+    Component.DesktopOnly(Component.FlexibleNavigation({
+    title: "",
+    showTitle: true,
+    links: [
+      { text: "Home", link: "/" },
+      { text: "About Me", link: "/about" },
+      { text: "Posts", link: "https://github.com", external: true }
+    ]
+  })),
+    Component.DesktopOnly(Component.TableOfContents()),
   ],
   right: [
     Component.Graph(),
-    Component.DesktopOnly(Component.TableOfContents()),
+    Component.DesktopOnly(Component.Explorer()),
     Component.Backlinks(),
   ],
 }

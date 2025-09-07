@@ -1,3 +1,7 @@
 @use "./base.scss";
 
 // put your custom CSS here!
+// Override the exact selector you found in DevTools
+.page > #quartz-body .sidebar {
+  padding: 2rem 1rem 2rem !important;
+}
